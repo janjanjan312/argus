@@ -1,0 +1,7 @@
+yfinance
+finnhub-python
+edgartools
+pdfplumber
+pydantic
+requests
+python-dotenv
