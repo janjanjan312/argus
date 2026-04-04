@@ -56,7 +56,7 @@ All 12 data tools are registered in `data_tools/registry.py`, providing OpenAI F
 
 ### 3.2 PDF Pipeline
 
-SEC filings are downloaded via `edgartools` and parsed with `pdfplumber` into document chunks with full citation metadata (company, filing type, date, section title, page numbers, accession number, source URL) for RAG ingestion. 
+SEC filings are downloaded via `edgartools` and parsed with `pdfplumber` into document chunks with full citation metadata (company, filing type, date, section title, page numbers, accession number, source URL) for RAG ingestion.
 
 ### 3.3 Initial Company Coverage
 
