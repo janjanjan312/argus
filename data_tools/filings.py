@@ -103,8 +103,8 @@ def _extract_tables_from_page(page: pdfplumber.page.Page) -> list[TableData]:
 def parse_filing(
     file_path: str,
     metadata: dict,
-    chunk_size: int = 600,
-    chunk_overlap: int = 100,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 150,
 ) -> list[dict]:
 
     filing_meta = FilingMetadata(**metadata)
