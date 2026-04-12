@@ -25,7 +25,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from .stock import get_stock_price, get_stock_info, get_financial_statements, get_market_overview
 from .news import get_company_news, get_earnings_data
 from .financials import get_sector_pe, get_peer_comparison, get_analyst_estimates, get_key_metrics
-from .filings import download_filing, parse_filing, get_risk_factors
+from .filings import download_filing, parse_filing
 
 __all__ = [
     "get_stock_price",
@@ -40,5 +40,4 @@ __all__ = [
     "get_key_metrics",
     "download_filing",
     "parse_filing",
-    "get_risk_factors",
 ]

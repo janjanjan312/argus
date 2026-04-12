@@ -14,16 +14,20 @@ TOOL_MAP : dict[str, Callable]
 Usage (Agent side)::
 
     from data_tools.registry import TOOL_DEFINITIONS, TOOL_MAP
+    from rag.agent_tools import RAG_TOOL_DEFINITIONS, RAG_TOOL_MAP
     import json
+
+    tools = TOOL_DEFINITIONS + RAG_TOOL_DEFINITIONS
+    tool_map = {**TOOL_MAP, **RAG_TOOL_MAP}
 
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=messages,
-        tools=TOOL_DEFINITIONS,
+        tools=tools,
     )
 
     for tool_call in response.choices[0].message.tool_calls:
-        func = TOOL_MAP[tool_call.function.name]
+        func = tool_map[tool_call.function.name]
         result = func(**json.loads(tool_call.function.arguments))
 """
 

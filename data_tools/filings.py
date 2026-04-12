@@ -1,13 +1,6 @@
-"""
-PDF download and parsing for SEC EDGAR filings (10-K, 10-Q, 8-K).
-
-Uses `edgartools` for downloading and `pdfplumber` for table extraction.
-"""
-
 from __future__ import annotations
 
 import hashlib
-import os
 import re
 from pathlib import Path
 from typing import Optional
@@ -22,30 +15,15 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "filings"
 set_identity("ARGUS Research argus@research.ai")
 
 
-# ---------------------------------------------------------------------------
+# =========================
 # Download
-# ---------------------------------------------------------------------------
-
+# =========================
 def download_filing(
     ticker: str,
     form: str = "10-K",
     save_dir: Optional[str] = None,
 ) -> dict:
-    """Download the latest SEC filing for *ticker* and return metadata.
 
-    Parameters
-    ----------
-    ticker : str
-        Stock ticker, e.g. ``"AAPL"``.
-    form : str
-        Filing type – ``"10-K"``, ``"10-Q"``, or ``"8-K"``.
-    save_dir : str, optional
-        Directory to save the filing.  Defaults to ``data/filings/``.
-
-    Returns
-    -------
-    dict with keys: ``file_path``, ``metadata`` (FilingMetadata dict).
-    """
     dest = Path(save_dir) if save_dir else DATA_DIR
     dest.mkdir(parents=True, exist_ok=True)
 
@@ -79,10 +57,9 @@ def download_filing(
     }
 
 
-# ---------------------------------------------------------------------------
-# Parse
-# ---------------------------------------------------------------------------
-
+# =========================
+# Section Headings
+# =========================
 _SECTION_HEADINGS = [
     "Business",
     "Risk Factors",
@@ -96,65 +73,58 @@ _SECTION_HEADINGS = [
 ]
 
 
+def _match_section(text: str) -> str | None:
+    for heading in _SECTION_HEADINGS:
+        if re.search(rf"\b{re.escape(heading)}\b", text, re.IGNORECASE):
+            return heading
+    return None
+
+
+# =========================
+# Table Extraction
+# =========================
 def _extract_tables_from_page(page: pdfplumber.page.Page) -> list[TableData]:
-    """Extract tables from a single pdfplumber page."""
     tables: list[TableData] = []
     for raw_table in page.extract_tables():
         if not raw_table or len(raw_table) < 2:
             continue
+
         headers = [str(c).strip() if c else "" for c in raw_table[0]]
-        rows = [
-            [str(c).strip() if c else "" for c in row]
-            for row in raw_table[1:]
-        ]
+        rows = [[str(c).strip() if c else "" for c in row] for row in raw_table[1:]]
+
         tables.append(TableData(name="", headers=headers, rows=rows))
+
     return tables
 
 
+# =========================
+# Main Parse
+# =========================
 def parse_filing(
     file_path: str,
     metadata: dict,
-    chunk_size: int = 800,
-    chunk_overlap: int = 120,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 150,
 ) -> list[dict]:
-    """Parse a PDF filing into chunks with metadata.
 
-    Parameters
-    ----------
-    file_path : str
-        Path to the downloaded PDF file.
-    metadata : dict
-        FilingMetadata dict (from ``download_filing``).
-    chunk_size : int
-        Target chunk size in characters.
-    chunk_overlap : int
-        Overlap between consecutive chunks in characters.
-
-    Returns
-    -------
-    list of DocumentChunk dicts.
-    """
     filing_meta = FilingMetadata(**metadata)
-    chunks: list[dict] = []
-
     ext = Path(file_path).suffix.lower()
+
     if ext == ".pdf":
-        chunks = _parse_pdf(file_path, filing_meta, chunk_size, chunk_overlap)
+        return _parse_pdf(file_path, filing_meta, chunk_size, chunk_overlap)
     else:
-        chunks = _parse_text_file(file_path, filing_meta, chunk_size, chunk_overlap)
-
-    return chunks
+        return _parse_text_file(file_path, filing_meta, chunk_size, chunk_overlap)
 
 
-def _parse_pdf(
-    file_path: str,
-    meta: FilingMetadata,
-    chunk_size: int,
-    chunk_overlap: int,
-) -> list[dict]:
-    chunks: list[dict] = []
+# =========================
+# PDF Parser
+# =========================
+def _parse_pdf(file_path, meta, chunk_size, chunk_overlap):
+
+    chunks = []
+
     with pdfplumber.open(file_path) as pdf:
-        full_text_parts: list[tuple[str, int, list[TableData]]] = []
+        full_text_parts = []
         for page in pdf.pages:
             text = page.extract_text() or ""
             tables = _extract_tables_from_page(page)
@@ -162,25 +132,31 @@ def _parse_pdf(
 
     current_section = "General"
     buffer = ""
-    buffer_pages: list[int] = []
-    buffer_tables: list[TableData] = []
+    buffer_pages = []
+    buffer_tables = []
 
     for text, page_num, tables in full_text_parts:
-        for heading in _SECTION_HEADINGS:
-            if heading.lower() in text.lower():
-                current_section = heading
-                break
+
+        matched = _match_section(text)
+        if matched:
+            current_section = matched
 
         buffer += ("\n" if buffer else "") + text
+
         if page_num not in buffer_pages:
             buffer_pages.append(page_num)
+
         buffer_tables.extend(tables)
 
         while len(buffer) >= chunk_size:
+
             chunk_text = buffer[:chunk_size]
+            chunk_text = f"[Section: {current_section}]\n{chunk_text}"
+
             buffer = buffer[chunk_size - chunk_overlap:]
 
             chunk_id = _make_chunk_id(meta.ticker, meta.filing_type, current_section, len(chunks))
+
             chunks.append(
                 DocumentChunk(
                     chunk_id=chunk_id,
@@ -191,15 +167,19 @@ def _parse_pdf(
                     tables=buffer_tables,
                 ).model_dump()
             )
+
             buffer_pages = [buffer_pages[-1]] if buffer_pages else []
             buffer_tables = []
 
     if buffer.strip():
+        chunk_text = f"[Section: {current_section}]\n{buffer}"
+
         chunk_id = _make_chunk_id(meta.ticker, meta.filing_type, current_section, len(chunks))
+
         chunks.append(
             DocumentChunk(
                 chunk_id=chunk_id,
-                text=buffer,
+                text=chunk_text,
                 metadata=meta,
                 section_title=current_section,
                 page_numbers=list(buffer_pages),
@@ -210,25 +190,26 @@ def _parse_pdf(
     return chunks
 
 
-def _parse_text_file(
-    file_path: str,
-    meta: FilingMetadata,
-    chunk_size: int,
-    chunk_overlap: int,
-) -> list[dict]:
-    """Fallback parser for HTML / plain-text filings."""
+# =========================
+# TEXT Parser
+# =========================
+def _parse_text_file(file_path, meta, chunk_size, chunk_overlap):
+
     raw = Path(file_path).read_text(errors="ignore")
+
     clean = re.sub(r"<[^>]+>", " ", raw)
     clean = re.sub(r"\s+", " ", clean).strip()
 
-    section_positions: list[tuple[int, str]] = [(0, "General")]
+    section_positions = [(0, "General")]
+
     for heading in _SECTION_HEADINGS:
-        pattern = re.compile(re.escape(heading), re.IGNORECASE)
+        pattern = re.compile(rf"\b{re.escape(heading)}\b", re.IGNORECASE)
         for m in pattern.finditer(clean):
             section_positions.append((m.start(), heading))
+
     section_positions.sort(key=lambda x: x[0])
 
-    def _section_at(pos: int) -> str:
+    def _section_at(pos):
         current = "General"
         for sp, name in section_positions:
             if sp > pos:
@@ -236,12 +217,18 @@ def _parse_text_file(
             current = name
         return current
 
-    chunks: list[dict] = []
+    chunks = []
     pos = 0
+
     while pos < len(clean):
-        chunk_text = clean[pos : pos + chunk_size]
+
         section = _section_at(pos)
+
+        chunk_text = clean[pos : pos + chunk_size]
+        chunk_text = f"[Section: {section}]\n{chunk_text}"
+
         chunk_id = _make_chunk_id(meta.ticker, meta.filing_type, section, len(chunks))
+
         chunks.append(
             DocumentChunk(
                 chunk_id=chunk_id,
@@ -252,39 +239,13 @@ def _parse_text_file(
                 tables=[],
             ).model_dump()
         )
+
         pos += chunk_size - chunk_overlap
 
     return chunks
 
 
-# ---------------------------------------------------------------------------
-# Convenience: extract risk factors section
-# ---------------------------------------------------------------------------
-
-def get_risk_factors(ticker: str) -> dict:
-    """Download the latest 10-K and return only the Risk Factors chunks.
-
-    Returns
-    -------
-    dict with ``ticker``, ``filing_date``, ``chunks`` (list of chunk dicts).
-    """
-    result = download_filing(ticker, form="10-K")
-    all_chunks = parse_filing(result["file_path"], result["metadata"])
-    risk_chunks = [c for c in all_chunks if "risk" in c.get("section_title", "").lower()]
-    return {
-        "ticker": ticker,
-        "filing_date": result["metadata"]["filing_date"],
-        "source_url": result["metadata"]["source_url"],
-        "num_chunks": len(risk_chunks),
-        "chunks": risk_chunks,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _make_chunk_id(ticker: str, form: str, section: str, idx: int) -> str:
+def _make_chunk_id(ticker, form, section, idx):
     raw = f"{ticker}_{form}_{section}_{idx}"
     short_hash = hashlib.md5(raw.encode()).hexdigest()[:8]
     return f"{ticker}_{form}_{section.replace(' ', '')}_{idx:04d}_{short_hash}"

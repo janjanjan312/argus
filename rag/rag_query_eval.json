@@ -1,0 +1,27 @@
+[
+  {
+    "query": "What are the main risk factors for Apple?",
+    "ticker": "AAPL",
+    "relevant_keywords": ["risk", "uncertainty", "adverse", "competition"]
+  },
+  {
+    "query": "What legal proceedings involve Apple?",
+    "ticker": "AAPL",
+    "relevant_keywords": ["legal", "lawsuit", "litigation", "proceedings"]
+  },
+  {
+    "query": "What does Apple do as a business?",
+    "ticker": "AAPL",
+    "relevant_keywords": ["business", "products", "services", "segment"]
+  },
+  {
+    "query": "What are NVIDIA's competitive risks?",
+    "ticker": "NVDA",
+    "relevant_keywords": ["competition", "competitors", "market", "risk"]
+  },
+  {
+    "query": "What challenges does management mention for Microsoft?",
+    "ticker": "MSFT",
+    "relevant_keywords": ["challenge", "uncertainty", "risk", "management"]
+  }
+]
