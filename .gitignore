@@ -1,0 +1,48 @@
+# Environment
+.env
+.venv/
+venv/
+*.egg-info/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.eggs
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (keep structure but ignore content)
+data/filings/*.html
+data/filings/*.pdf
+data/filings/*.htm
+data/rag_index/
+data/*.index
+data/*.jsonl
+
+# Logs
+*.log
+
+# Temp
+*.tmp
+*.temp
+.tmp/
+tmp/
+
+# Debug
+debug/

@@ -1,0 +1,11 @@
+yfinance
+finnhub-python
+edgartools
+pdfplumber
+pydantic
+requests
+python-dotenv
+chromadb>=0.4.22
+openai>=1.40.0
+sentence-transformers
+faiss-cpu
