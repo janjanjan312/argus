@@ -79,7 +79,7 @@ def run_query(client: OpenAI, model: str, query: str) -> str:
 def main():
     api_key = os.getenv("OPENAI_API_KEY", "")
     base_url = os.getenv("OPENAI_BASE_URL", None)
-    model = os.getenv("OPENAI_MODEL", "gpt-4o")
+    model = os.getenv("OPENAI_MODEL", "gemini-3-flash")
 
     if not api_key:
         print("Error: set OPENAI_API_KEY in .env or environment")

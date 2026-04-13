@@ -15,7 +15,7 @@ Usage (Agent side)::
 
     from data_tools.registry import TOOL_DEFINITIONS, TOOL_MAP
     from rag.agent_tools import RAG_TOOL_DEFINITIONS, RAG_TOOL_MAP
-    import json
+    import JSON
 
     tools = TOOL_DEFINITIONS + RAG_TOOL_DEFINITIONS
     tool_map = {**TOOL_MAP, **RAG_TOOL_MAP}
@@ -23,7 +23,7 @@ Usage (Agent side)::
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=messages,
-        tools=tools,
+        tools=tools
     )
 
     for tool_call in response.choices[0].message.tool_calls:
@@ -53,8 +53,6 @@ from .financials import (
 )
 from .filings import (
     download_filing,
-    parse_filing,
-    get_risk_factors,
 )
 
 # -------------------------------------------------------------------------
@@ -322,28 +320,28 @@ TOOL_DEFINITIONS: list[dict] = [
             },
         },
     },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_risk_factors",
-            "description": (
-                "Download the latest 10-K filing and extract the Risk Factors "
-                "section. Returns parsed text chunks with citation metadata. "
-                "Use this when the user asks about regulatory risks, compliance "
-                "issues, or potential risk factors from official filings."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {
-                        "type": "string",
-                        "description": "Stock ticker symbol",
-                    },
-                },
-                "required": ["ticker"],
-            },
-        },
-    },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "get_risk_factors",
+    #         "description": (
+    #             "Download the latest 10-K filing and extract the Risk Factors "
+    #             "section. Returns parsed text chunks with citation metadata. "
+    #             "Use this when the user asks about regulatory risks, compliance "
+    #             "issues, or potential risk factors from official filings."
+    #         ),
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "ticker": {
+    #                     "type": "string",
+    #                     "description": "Stock ticker symbol",
+    #                 },
+    #             },
+    #             "required": ["ticker"],
+    #         },
+    #     },
+    # },
 ]
 
 
@@ -363,5 +361,4 @@ TOOL_MAP: dict[str, Callable] = {
     "get_analyst_estimates": get_analyst_estimates,
     "get_key_metrics": get_key_metrics,
     "download_filing": download_filing,
-    "get_risk_factors": get_risk_factors,
 }
