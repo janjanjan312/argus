@@ -11,3 +11,9 @@ python-dotenv
 sentence-transformers
 faiss-cpu  # or faiss-gpu for GPU support
 
+# Agent
+langgraph
+streamlit
+langchain_core
+langchain_openai
+
