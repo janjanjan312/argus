@@ -74,3 +74,13 @@ The following companies have been pre-loaded into the knowledge base as the init
 | China Tech | Alibaba | BABA | `BABA_20-F_20250626.html` | 2025-06 |
 | China Tech | Baidu | BIDU | `BIDU_20-F_20260317.html` | 2026-03 |
 | AI Software | Palantir | PLTR | `PLTR_10-K_20260217.html` | 2026-02 |
+
+---
+
+## 4. Data Presentation
+
+Project presentation materials and demo videos are stored in `data_presentation/`.
+
+- `ARGUS_data.pptx`: presentation deck
+- `1.mov`, `2.mov`, `3.mov`: original presentation/demo recordings
+- `1.mp4`, `2.mp4`, `3.mp4`: compressed versions for easier preview and sharing
