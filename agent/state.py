@@ -1,7 +1,6 @@
 # l3_agent/state.py
 
 from typing import TypedDict, List, Dict, Any, Annotated
-import operator
 
 def manage_collected_data(existing_data: list, new_data: Any) -> list:
     if new_data == "CLEAR":
@@ -19,7 +18,7 @@ class AgentState(TypedDict):
     chat_history: List[Dict[str, str]]
     memory_summary: str
     execution_plan: List[str]
-    next_worker: str
+    next_worker: List[str]
     revision_count: int
     collected_data: Annotated[list, manage_collected_data]
     worker_call_counts: dict

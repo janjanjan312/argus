@@ -35,6 +35,7 @@ def reviewer_node(state: AgentState) -> dict:
     })
 
     feedback = response.content.strip()
+    # 清理反馈，移除引号和空白字符
     clean_feedback = feedback.strip(' "\'\n.').upper()
 
     if "UNDERSTOOD" in clean_feedback or "PLEASE PROVIDE" in clean_feedback:
@@ -44,7 +45,8 @@ def reviewer_node(state: AgentState) -> dict:
             "revision_count": current_revision + 1
         }
 
-    if clean_feedback == "PASS" or "PASS" in clean_feedback:
+    # 修复：检查 PASS 应该在清理后进行，且只检查一次
+    if clean_feedback == "PASS":
         print("🟢 [Reviewer] 核查通过！数据无冲突。")
         return {"verification_feedback": "PASS"}
     else:
